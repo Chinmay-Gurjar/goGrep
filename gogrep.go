@@ -20,6 +20,7 @@ var (
         wg sync.WaitGroup
 	mcount int
 	outfile string
+	grepResult	= make([][]results, 0)
 )
 
 type results struct {
@@ -28,10 +29,12 @@ type results struct {
         file_path string
 }
 
-func printResults(result results) {
-        if result.matched {
-		fmt.Println(result.file_path, strings.TrimRight(result.line, "\n"))
-        }
+func printResults(result_slice []results) {
+	for i := range result_slice{
+		if result_slice[i].matched {
+			fmt.Println(result_slice[i].file_path, strings.TrimRight(result_slice[i].line, "\n"))
+		}
+	}
 }
 
 func writeResults(result results){
@@ -53,6 +56,7 @@ func writeResults(result results){
 func search(wg *sync.WaitGroup, filename string) {
         defer wg.Done()
 	var reader *bufio.Reader
+	result := make([]results, 1)
 	if filename == "" {
 		reader = bufio.NewReader(os.Stdin)
 	} else {
@@ -66,17 +70,18 @@ func search(wg *sync.WaitGroup, filename string) {
 			if match {
 				mcount++
 			}
-                        result := results{match, readbuffer, filename}
+                        result = append(result, results{match, readbuffer, filename})
 
-			if !*count && !*write{
-				printResults(result)
-			} else if !*count && *write{
-				writeResults(result)
-			}
+		//	if !*count && !*write{
+		//		printResults(result)
+		//	} else if !*count && *write{
+		//		writeResults(result)
+		//	}
                 } else {
                         break
                 }
         }
+	grepResult = append(grepResult, result)
 }
 
 func main() {
@@ -114,6 +119,9 @@ func main() {
                 })
         }
         wg.Wait()
+	for i := range grepResult{
+		printResults(grepResult[i])
+	}
 	if *count {
 		fmt.Println(mcount)
 	}
