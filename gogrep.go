@@ -53,8 +53,7 @@ func writeResults(result results){
 	}
 }
 
-func search(wg *sync.WaitGroup, filename string) {
-        defer wg.Done()
+func search(filename string) []results {
 	var reader *bufio.Reader
 	result := make([]results, 1)
 	if filename == "" {
@@ -81,14 +80,42 @@ func search(wg *sync.WaitGroup, filename string) {
                         break
                 }
         }
-	grepResult = append(grepResult, result)
+	return result
 }
 
-func main() {
-        flag.Parse()
+func parseInput() (string, []string,[]string) {
+	flag.Parse()
         args := flag.Args()
         pattern := args[0]
         filenames := args[1:]
+	return pattern, filenames, args
+}
+
+func getFilePath(filenames []string) []string{
+	filepaths := make([]string, 0)
+        for _, path := range filenames {
+                filepath.Walk(path, func(file_path string, file os.FileInfo, err error) error {
+                        if err != nil {
+                                return nil
+                        }
+			if file.IsDir() && !*recursive {
+                                return filepath.SkipDir
+                        }
+			filepaths = append(filepaths, file_path)
+                        return nil
+                })
+	}
+	return filepaths
+}
+
+func searchAndPrint(wg *sync.WaitGroup, filepath string) {
+	defer wg.Done()
+	result := search(filepath)
+	printResults(result)
+}
+
+func main() {
+	pattern, filenames, args := parseInput()
 	if *write {
 		outfile = args[0]
 		pattern = args[1]
@@ -101,27 +128,17 @@ func main() {
         compiledPattern = regexp.MustCompile(pattern)
 	if len(args) < 2 {
 		wg.Add(1)
-		go search(&wg, "")
+		go search("")
 	}
 
-        for _, path := range filenames {
-                filepath.Walk(path, func(file_path string, file os.FileInfo, err error) error {
-                        if err != nil {
-                                return nil
-                        }
-			if file.IsDir() && !*recursive {
-                                return filepath.SkipDir
-                        }
+	paths := getFilePath(filenames)
 
-                        wg.Add(1)
-                        go search(&wg, file_path)
-                        return nil
-                })
-        }
+
+	for _, path := range paths {
+		wg.Add(1)
+		go searchAndPrint(&wg, path)
+	}
         wg.Wait()
-	for i := range grepResult{
-		printResults(grepResult[i])
-	}
 	if *count {
 		fmt.Println(mcount)
 	}
