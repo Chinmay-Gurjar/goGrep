@@ -3,11 +3,11 @@ package main
 import (
         "fmt"
         "os"
-        "regexp"
         "flag"
-        "path/filepath"
-	"strings"
 	"sample.com/search"
+	"errors"
+	"sample.com/file"
+	"strconv"
         )
 
 var (
@@ -15,58 +15,37 @@ var (
         count           = flag.Bool("c", false, "Just show counts")
         caseinsensitive = flag.Bool("i", false, "case-insensitive matching")
         write           = flag.Bool("o", false, "Write to file")
-	mcount int
 	outfile string
 )
 
-
-
-func writeResults(result search.Results){
-        if result.Matched {
-		fp, err := os.OpenFile(outfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-
-		if err != nil {
-			panic(err)
-		}
-		defer fp.Close()
-
-		_, ferr := fp.WriteString(result.File_path + "\t" + strings.TrimRight(result.Line, "\n") + "\n")
-		if ferr != nil {
-			fmt.Println("Error while writing the file:", ferr)
-		}
-	}
-}
-
-
-
-func parseInput() (string, []string,[]string) {
+func parseInput() (string, []string, []string, error) {
 	flag.Parse()
         args := flag.Args()
-        pattern := args[0]
-        filenames := args[1:]
-	return pattern, filenames, args
-}
-
-func getFilePath(filenames []string) []string{
-	filepaths := make([]string, 0)
-        for _, path := range filenames {
-                filepath.Walk(path, func(file_path string, file os.FileInfo, err error) error {
-                        if err != nil {
-                                return nil
-                        }
-			if file.IsDir() && !*recursive {
-                                return filepath.SkipDir
-                        }
-			filepaths = append(filepaths, file_path)
-                        return nil
-                })
+	if len(args) == 0 {
+		err := errors.New("No arguments")
+		return "", nil, nil, err
 	}
-	return filepaths
+        pattern := args[0]
+	if len(pattern) == 0 {
+		err := errors.New("Empty search pattern")
+		return "", nil, nil, err
+	}
+        filenames := args[1:]
+	return pattern, filenames, args, nil
 }
 
+
+
+func showErrorAndExit(err error) {
+	fmt.Println("The code had follwing error: ", err)
+	os.Exit(0)
+}
 
 func main() {
-	pattern, filenames, args := parseInput()
+	pattern, filenames, args, err := parseInput()
+	if err != nil{
+		showErrorAndExit(err)
+	}
 	if *write {
 		outfile = args[0]
 		pattern = args[1]
@@ -76,15 +55,31 @@ func main() {
 		 pattern = "(?i)" + pattern
         }
 
-	//if len(args) < 2 {
-	//	wg.Add(1)
-	//	go search("")
-	//}
-
-	paths := getFilePath(filenames)
-
-	search.Search(patterg, paths)
-	if *count {
-		fmt.Println(mcount)
+	if len(args) < 2 {
+		search.Search(pattern, []string{})
 	}
+
+	paths, err := file.GetFilePath(filenames, *recursive)
+
+	results, mcount := search.Search(pattern, paths)
+	if *count {
+		if *write {
+			file.WriteResults(strconv.Itoa(mcount) + "\n", outfile)
+		} else {
+			fmt.Println(mcount)
+		}
+	} else if *write {
+		for _, result := range results {
+			for _, line := range result {
+				file.WriteGrepResults(line, outfile)
+			}
+		}
+
+	} else {
+		for _, result := range results {
+			search.PrintResults(result)
+		}
+	}
+
+
 }

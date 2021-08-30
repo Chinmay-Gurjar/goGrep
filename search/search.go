@@ -7,11 +7,13 @@ import (
 	"regexp"
 	"os"
 	"strings"
+	"io"
 )
 
 var (
 	compiledPattern *regexp.Regexp
 	mcount int
+	allResult = make([][]Results, 0)
 )
 
 type Results struct {
@@ -20,7 +22,7 @@ type Results struct {
         File_path string
 }
 
-func printResults(result_slice []Results) {
+func PrintResults(result_slice []Results) {
 	for i := range result_slice{
 		if result_slice[i].Matched {
 			fmt.Println(result_slice[i].File_path, strings.TrimRight(result_slice[i].Line, "\n"))
@@ -34,7 +36,10 @@ func searchSingleFile(filename string) []Results {
 	if filename == "" {
 		reader = bufio.NewReader(os.Stdin)
 	} else {
-		fp, _ := os.Open(filename)
+		fp, err := os.Open(filename)
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
 		defer fp.Close()
 		reader = bufio.NewReader(fp)
 	}
@@ -43,17 +48,19 @@ func searchSingleFile(filename string) []Results {
                         match := compiledPattern.Match([]byte(readbuffer))
 			if match {
 				mcount++
+				result = append(result, Results{match, readbuffer, filename})
 			}
-                        result = append(result, Results{match, readbuffer, filename})
+			if filename == "" {
+				PrintResults(result)
+			}
 
-		//	if !*count && !*write{
-		//		printResults(result)
-		//	} else if !*count && *write{
-		//		writeResults(result)
-		//	}
+                } else if(err==io.EOF) {
+			break
+
                 } else {
+			fmt.Println("Error:", err)
                         break
-                }
+		}
         }
 	return result
 }
@@ -61,15 +68,19 @@ func searchSingleFile(filename string) []Results {
 func searchAndPrint(wg *sync.WaitGroup, filepath string) {
 	defer wg.Done()
 	result := searchSingleFile(filepath)
-	printResults(result)
+	allResult = append(allResult, result)
 }
 
-func Search(pattern string, filepaths []string) {
+func Search(pattern string, filepaths []string) ([][]Results, int) {
         var wg sync.WaitGroup
         compiledPattern = regexp.MustCompile(pattern)
+	if len(filepaths) == 0 {
+		searchAndPrint(&wg, "")
+	}
 	for _, path := range filepaths {
 		wg.Add(1)
 		go searchAndPrint(&wg, path)
 	}
 	wg.Wait()
+	return allResult, mcount
 }
