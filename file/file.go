@@ -11,19 +11,25 @@ import (
 func GetFilePath(filenames []string, isRecursive bool) ([]string, error){
 	filepaths := make([]string, 0)
         for _, path := range filenames {
-                filepath.Walk(path, func(file_path string, file os.FileInfo, err error) error {
+		walkfunc := filepath.Walk(path, func(file_path string, file os.FileInfo, err error) error {
+			fmt.Println(err, file.IsDir())
                         if err != nil {
                                 return nil
                         }
 			if file.IsDir() && !isRecursive {
+				fmt.Println(filepath.SkipDir)
                                 return filepath.SkipDir
                         }
 			if !file.IsDir() {
 				filepaths = append(filepaths, file_path)
 				return nil
 			}
-                        return nil
+                        //return nil
                 })
+		fmt.Println("Hey", walkfunc)
+		if walkfunc != nil {
+			fmt.Println("Error")
+		}
 	}
 	return filepaths, nil
 }
@@ -38,7 +44,7 @@ func WriteResults(data string, outfile string){
 	_, ferr := fp.WriteString(data)
 	if ferr != nil {
 		fmt.Println("Error while writing the file:", ferr)
-		}
+	}
 }
 
 func WriteGrepResults(result search.Results, outfile string) {
