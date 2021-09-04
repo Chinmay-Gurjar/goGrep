@@ -19,12 +19,10 @@ func TestGetFilePath(t *testing.T) {
 	err := os.Mkdir(dirName, 0755)
 	if err != nil {
 		fmt.Println("Cannot create a directory!", err)
-		panic(err)
 	}
 	err = os.Mkdir(dirName + "/" + recDirName, 0755)
 	if err != nil {
 		fmt.Println("Cannot create a directory!", err)
-		panic(err)
 	}
 	defer os.RemoveAll(dirName)
 	defer os.RemoveAll(recDirName)
@@ -36,20 +34,20 @@ func TestGetFilePath(t *testing.T) {
 	}
 	inCorrectfiles, err := GetFilePath([]string{dirName}, false)
 	if err != nil {
-		t.Errorf("Something")
+		t.Errorf("Error while getting the files: %v", err)
 	}
-	if len(inCorrectfiles) != (len(testFileNames)) {
-		t.Errorf("Not same %v", inCorrectfiles)
+	if len(inCorrectfiles) != 4 {
+		t.Errorf("Expected %v, got %v", testFileNames, inCorrectfiles)
 	}
 
 
 	files, err := GetFilePath([]string{dirName}, true)
 	if err != nil {
-		t.Errorf("Something")
+		t.Errorf("Error while getting the files: %v", err)
 	}
 
 	if len(files) != (len(testFileNames)) {
-		t.Errorf("Not same %v", files)
+		t.Errorf("Expected %v, got %v", testFileNames, files)
 	}
 
 }

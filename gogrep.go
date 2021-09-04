@@ -34,8 +34,6 @@ func parseInput() (string, []string, []string, error) {
 	return pattern, filenames, args, nil
 }
 
-
-
 func showErrorAndExit(err error) {
 	fmt.Println("The code had follwing error: ", err)
 	os.Exit(0)
@@ -61,7 +59,10 @@ func main() {
 
 	paths, err := file.GetFilePath(filenames, *recursive)
 
-	results, mcount := search.Search(pattern, paths)
+	results, mcount, err := search.Search(pattern, paths)
+	if err != nil {
+		showErrorAndExit(err)
+	}
 	if *count {
 		if *write {
 			file.WriteResults(strconv.Itoa(mcount) + "\n", outfile)

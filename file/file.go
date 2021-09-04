@@ -11,25 +11,23 @@ import (
 func GetFilePath(filenames []string, isRecursive bool) ([]string, error){
 	filepaths := make([]string, 0)
         for _, path := range filenames {
-		walkfunc := filepath.Walk(path, func(file_path string, file os.FileInfo, err error) error {
-			fmt.Println(err, file.IsDir())
+		filepath.Walk(path, func(file_path string, file os.FileInfo, err error) error {
+			if path == file_path {
+				return nil
+			}
                         if err != nil {
                                 return nil
-                        }
-			if file.IsDir() && !isRecursive {
-				fmt.Println(filepath.SkipDir)
-                                return filepath.SkipDir
                         }
 			if !file.IsDir() {
 				filepaths = append(filepaths, file_path)
 				return nil
 			}
-                        //return nil
+			if file.IsDir() && !isRecursive {
+				return filepath.SkipDir
+                        }
+
+                        return nil
                 })
-		fmt.Println("Hey", walkfunc)
-		if walkfunc != nil {
-			fmt.Println("Error")
-		}
 	}
 	return filepaths, nil
 }

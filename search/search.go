@@ -71,9 +71,14 @@ func searchAndPrint(wg *sync.WaitGroup, filepath string) {
 	allResult = append(allResult, result)
 }
 
-func Search(pattern string, filepaths []string) ([][]Results, int) {
+func Search(pattern string, filepaths []string) ([][]Results, int, error) {
         var wg sync.WaitGroup
-        compiledPattern = regexp.MustCompile(pattern)
+	var err error
+	compiledPattern, err = regexp.Compile(pattern)
+	if err != nil {
+		fmt.Println("Invalid Regex")
+		return nil, 0, err
+	}
 	if len(filepaths) == 0 {
 		searchAndPrint(&wg, "")
 	}
@@ -82,5 +87,5 @@ func Search(pattern string, filepaths []string) ([][]Results, int) {
 		go searchAndPrint(&wg, path)
 	}
 	wg.Wait()
-	return allResult, mcount
+	return allResult, mcount, nil
 }
