@@ -20,6 +20,7 @@ This usage outputs the results into the file output.txt instead of stdout
 goGrep -c "pattern" file.txt
 This prints the number of matches found
 
+
 They can also be used in combination
 
 goGrep -r -i "pattern" SearchFolder
