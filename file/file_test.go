@@ -32,7 +32,7 @@ func TestGetFilePath(t *testing.T) {
 	for _, fileName := range testFileNames {
 		createEmptyFile(dirName, fileName)
 	}
-	inCorrectfiles, err := GetFilePath([]string{dirName}, false)
+	inCorrectfiles, err := GetFilePaths([]string{dirName}, false)
 	if err != nil {
 		t.Errorf("Error while getting the files: %v", err)
 	}
@@ -41,7 +41,7 @@ func TestGetFilePath(t *testing.T) {
 	}
 
 
-	files, err := GetFilePath([]string{dirName}, true)
+	files, err := GetFilePaths([]string{dirName}, true)
 	if err != nil {
 		t.Errorf("Error while getting the files: %v", err)
 	}

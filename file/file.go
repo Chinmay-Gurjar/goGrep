@@ -6,18 +6,19 @@ import (
         "sample.com/search"
 	"strings"
 	"fmt"
+	"errors"
         )
 
-func GetFilePath(filenames []string, isRecursive bool) ([]string, error){
+func GetFilePaths(filenames []string, isRecursive bool) ([]string, error){
 	filepaths := make([]string, 0)
         for _, path := range filenames {
 		filepath.Walk(path, func(file_path string, file os.FileInfo, err error) error {
-			if path == file_path {
-				return nil
-			}
                         if err != nil {
                                 return nil
                         }
+			if file.IsDir() && path == file_path {
+				return nil
+			}
 			if !file.IsDir() {
 				filepaths = append(filepaths, file_path)
 				return nil
@@ -28,6 +29,10 @@ func GetFilePath(filenames []string, isRecursive bool) ([]string, error){
 
                         return nil
                 })
+	}
+	emptyErr := errors.New("No files in the directory")
+	if len(filepaths) == 0 {
+		return filepaths, emptyErr
 	}
 	return filepaths, nil
 }
