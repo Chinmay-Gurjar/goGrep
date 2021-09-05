@@ -65,7 +65,7 @@ func searchSingleFile(filename string) []Results {
 	return result
 }
 
-func searchAndPrint(wg *sync.WaitGroup, filepath string) {
+func searchAll(wg *sync.WaitGroup, filepath string) {
 	defer wg.Done()
 	result := searchSingleFile(filepath)
 	allResult = append(allResult, result)
@@ -80,11 +80,11 @@ func Search(pattern string, filepaths []string) ([][]Results, int, error) {
 		return nil, 0, err
 	}
 	if len(filepaths) == 0 {
-		searchAndPrint(&wg, "")
+		searchAll(&wg, "")
 	}
 	for _, path := range filepaths {
 		wg.Add(1)
-		go searchAndPrint(&wg, path)
+		go searchAll(&wg, path)
 	}
 	wg.Wait()
 	return allResult, mcount, nil

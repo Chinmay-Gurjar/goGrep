@@ -15,7 +15,6 @@ var (
         count           = flag.Bool("c", false, "Just show counts")
         caseinsensitive = flag.Bool("i", false, "case-insensitive matching")
         write           = flag.Bool("o", false, "Write to file")
-	outfile string
 )
 
 func parseInput() (string, []string, []string, error) {
@@ -40,6 +39,7 @@ func showErrorAndExit(err error) {
 }
 
 func main() {
+	var outfile string
 	pattern, filenames, args, err := parseInput()
 	if err != nil{
 		showErrorAndExit(err)
@@ -57,7 +57,10 @@ func main() {
 		search.Search(pattern, []string{})
 	}
 
-	paths, err := file.GetFilePath(filenames, *recursive)
+	paths, err := file.GetFilePaths(filenames, *recursive)
+	if err != nil {
+		os.Exit(0)
+	}
 
 	results, mcount, err := search.Search(pattern, paths)
 	if err != nil {
