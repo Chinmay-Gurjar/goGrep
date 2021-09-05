@@ -19,4 +19,12 @@ This usage outputs the results into the file output.txt instead of stdout
 
 goGrep -c "pattern" file.txt
 This prints the number of matches found
+
+They can also be used in combination
+
+goGrep -r -i "pattern" SearchFolder
+This matches and print all the occurence of term "pattern" irrespective of the case present in the files in the folder SearchFoler
+
+goGrep -r -i -c "pattern" SearchFolder
+This matches and prints the count of term "pattern" irrespective of the case present in the files in the folder SearchFoler
 ```
